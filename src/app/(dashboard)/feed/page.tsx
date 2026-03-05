@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useCallback } from "react";
+import { Suspense, useMemo, useState, useCallback } from "react";
 import { useArticles } from "@/hooks/useArticles";
 import {
   useSentimentTrend,
@@ -94,7 +94,13 @@ export default function FeedPage() {
         </div>
       </div>
 
-      <ArticleFilters onFiltersChange={handleFiltersChange} />
+      <Suspense
+        fallback={
+          <div className="text-sm text-slate-500">Loading filters...</div>
+        }
+      >
+        <ArticleFilters onFiltersChange={handleFiltersChange} />
+      </Suspense>
 
       <div className="flex items-center justify-between">
         <p className="text-sm text-slate-500">Last updated: {lastUpdated}</p>
