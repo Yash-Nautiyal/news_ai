@@ -6,7 +6,19 @@ import { MOCK_USERS } from "@/lib/mockData";
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 const USE_MOCK_AUTH = process.env.NEXT_PUBLIC_USE_MOCK_AUTH === "true";
 
+// Ensure a stable secret is configured in production for NextAuth
+const NEXTAUTH_SECRET =
+  process.env.NEXTAUTH_SECRET ??
+  (process.env.NODE_ENV === "production" ? undefined : "dev-nextauth-secret");
+
+if (!NEXTAUTH_SECRET && process.env.NODE_ENV === "production") {
+  throw new Error(
+    "NEXTAUTH_SECRET is not set. Configure it in your Vercel project env vars.",
+  );
+}
+
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  secret: NEXTAUTH_SECRET,
   providers: [
     Credentials({
       name: "credentials",
