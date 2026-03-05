@@ -73,17 +73,11 @@ export default function AnalyticsPage() {
             />
           </div>
         </div>
-        <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm lg:col-span-2">
-          <h2 className="text-lg font-semibold text-slate-900">
-            Topic distribution
-          </h2>
-          <p className="text-sm text-slate-500">Top 10 topics</p>
-          <div className="mt-4">
-            <TopicDistributionChart
-              data={topicData ?? []}
-              isLoading={topicLoading}
-            />
-          </div>
+        <div className="lg:col-span-2">
+          <TopicDistributionChart
+            data={topicData ?? []}
+            isLoading={topicLoading}
+          />
         </div>
       </div>
 
