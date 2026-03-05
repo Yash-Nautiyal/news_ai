@@ -1,0 +1,136 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+
+  /* Global font families (change these to swap fonts app‑wide) */
+  --font-family-sans: var(--font-sans-main), system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
+  --font-family-mono: var(--font-mono-main), ui-monospace, SFMono-Regular, Menlo, Monaco,
+    Consolas, "Liberation Mono", "Courier New", monospace;
+  --font-family-hindi: var(--font-hindi), system-ui, -apple-system, BlinkMacSystemFont,
+    "Noto Sans Devanagari", sans-serif;
+
+  /* Global font scale (update these for global size changes) */
+  --font-size-root: 16px;
+  --font-size-xs: calc(var(--font-size-root) * 0.75);
+  /* 12px */
+  --font-size-sm: calc(var(--font-size-root) * 0.875);
+  /* 14px */
+  --font-size-base: var(--font-size-root);
+  /* 16px */
+  --font-size-lg: calc(var(--font-size-root) * 1.125);
+  /* 18px */
+  --font-size-xl: calc(var(--font-size-root) * 1.25);
+  /* 20px */
+  --font-size-2xl: calc(var(--font-size-root) * 1.5);
+  /* 24px */
+  --font-size-3xl: calc(var(--font-size-root) * 1.875);
+  /* 30px */
+
+  /* Global line heights */
+  --leading-tight: 1.2;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.7;
+
+  /* Global semantic color tokens (edit these to recolor the app) */
+  --color-text-main: #0f172a;
+  /* primary text (e.g. headings, strong text) */
+  --color-text-muted: #4b5563;
+  /* secondary text */
+  --color-text-subtle: #6b7280;
+  /* helper / tertiary text */
+  --color-text-soft: #9ca3af;
+  /* labels, meta */
+
+  --color-accent: #2563eb;
+  /* primary accent (links, actions) */
+  --color-accent-strong: #1d4ed8;
+  --color-accent-soft: #dbeafe;
+
+  --color-danger: #dc2626;
+  --color-danger-strong: #b91c1c;
+  --color-danger-soft: #fee2e2;
+
+  --color-success: #16a34a;
+  --color-success-soft: #dcfce7;
+
+  --color-warning: #ea580c;
+  --color-warning-soft: #ffedd5;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  /* Map Tailwind neutral text utilities to semantic tokens */
+  --color-slate-900: var(--color-text-main);
+  --color-slate-700: var(--color-text-muted);
+  --color-slate-600: var(--color-text-subtle);
+  --color-slate-500: var(--color-text-soft);
+
+  /* Map common accent/feedback colors to semantic tokens */
+  --color-blue-600: var(--color-accent);
+  --color-blue-800: var(--color-accent-strong);
+
+  --color-red-600: var(--color-danger);
+  --color-red-700: var(--color-danger-strong);
+  --color-red-800: var(--color-danger-strong);
+
+  --color-green-600: var(--color-success);
+
+  --color-orange-600: var(--color-warning);
+
+  /* Soft background pills and badges */
+  --color-blue-100: var(--color-accent-soft);
+  --color-red-100: var(--color-danger-soft);
+  --color-green-100: var(--color-success-soft);
+  --color-yellow-100: var(--color-warning-soft);
+  --color-orange-100: var(--color-warning-soft);
+
+  /* Tailwind font families */
+  --font-sans: var(--font-family-sans);
+  --font-mono: var(--font-family-mono);
+
+  /* Tailwind text size tokens (used by text-* utilities everywhere) */
+  --text-xs: var(--font-size-xs);
+  --text-xs--line-height: var(--leading-normal);
+  --text-sm: var(--font-size-sm);
+  --text-sm--line-height: var(--leading-normal);
+  --text-base: var(--font-size-base);
+  --text-base--line-height: var(--leading-normal);
+  --text-lg: var(--font-size-lg);
+  --text-lg--line-height: var(--leading-normal);
+  --text-xl: var(--font-size-xl);
+  --text-xl--line-height: var(--leading-tight);
+  --text-2xl: var(--font-size-2xl);
+  --text-2xl--line-height: var(--leading-tight);
+  --text-3xl: var(--font-size-3xl);
+  --text-3xl--line-height: var(--leading-tight);
+}
+
+@media (prefers-color-scheme: dark) {
+  /* :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+
+    --color-text-main: #e5e7eb;
+    --color-text-muted: #d1d5db;
+    --color-text-subtle: #9ca3af;
+    --color-text-soft: #6b7280;
+  } */
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: 'Montserrat', sans-serif;
+  font-size: var(--font-size-base);
+  line-height: var(--leading-normal);
+}
+
+.hindi-text {
+  font-family: var(--font-family-hindi);
+  line-height: var(--leading-relaxed);
+}
