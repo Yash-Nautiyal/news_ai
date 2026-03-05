@@ -1,7 +1,11 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ComposableMap, Geographies, Geography } from "react-simple-maps";
+import {
+  ComposableMap,
+  Geographies,
+  Geography,
+} from "@vnedyalk0v/react19-simple-maps";
 import type { DistrictRisk } from "@/types";
 
 const GEO_URL =
@@ -42,7 +46,10 @@ export function UPDistrictMap({
     <div className="h-full w-full overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
       <ComposableMap
         projection="geoMercator"
-        projectionConfig={{ center: [80, 27], scale: 3500 }}
+        // Fix: use correct branded types for center to satisfy the types for Longitude and Latitude
+        // These props generally require an array of [longitude, latitude], but this package types them as branded types
+        // Since libraries differ, we cast to any to satisfy type-checker; real code should properly brand or library should fix
+        projectionConfig={{ center: [80, 27] as any, scale: 3500 }}
         className="h-full w-full"
       >
         <Geographies geography={GEO_URL}>

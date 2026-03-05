@@ -21,7 +21,7 @@ Open [http://localhost:3000](http://localhost:3000). Unauthenticated users are r
 - **NextAuth v5** – JWT auth (credentials provider, backend at `NEXT_PUBLIC_API_URL`)
 - **Recharts** – sentiment, topic, source, severity charts
 - **D3** – entity co-occurrence graph
-- **react-simple-maps** – UP district map (install with `--legacy-peer-deps` on React 19)
+- **@vnedyalk0v/react19-simple-maps** – UP district map (React 19 compatible)
 
 ## Structure
 
