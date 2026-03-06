@@ -14,6 +14,7 @@ import type {
 import {
   MOCK_DISTRICT_RISK,
   MOCK_ENTITY_GRAPH,
+  MOCK_KEYWORD_TRENDING,
   MOCK_SEVERITY_DISTRIBUTION,
   MOCK_SENTIMENT_TREND,
   MOCK_SOURCE_VOLUME,
@@ -121,6 +122,9 @@ export function useKeywordTrending(period?: string) {
   return useQuery({
     queryKey: ["analytics", "keyword-trending", period],
     queryFn: async (): Promise<{ keyword: string; count: number }[]> => {
+      if (USE_MOCK) {
+        return MOCK_KEYWORD_TRENDING;
+      }
       const { data } = await api.get<{ keyword: string; count: number }[]>(
         "/api/analytics/keyword-trending",
         period ? { params: { period } } : undefined

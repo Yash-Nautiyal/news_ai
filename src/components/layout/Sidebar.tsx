@@ -4,7 +4,15 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 
-const NAV = [
+type NavItem = {
+  href: string;
+  label: string;
+  icon: string;
+  hideFor?: "VIEWER";
+  adminOnly?: boolean;
+};
+
+const NAV: NavItem[] = [
   { href: "/feed", label: "Live Feed", icon: "📡" },
   { href: "/analytics", label: "Analytics", icon: "📊" },
   { href: "/districts", label: "Districts", icon: "🗺️" },
@@ -14,7 +22,7 @@ const NAV = [
   { href: "/keywords", label: "Keywords", icon: "🔑", hideFor: "VIEWER" },
   { href: "/upload", label: "Upload Clipping", icon: "📤", hideFor: "VIEWER" },
   { href: "/admin/users", label: "Admin", icon: "⚙️", adminOnly: true },
-] as const;
+];
 
 export function Sidebar({
   role,
@@ -33,8 +41,8 @@ export function Sidebar({
   });
 
   return (
-    <aside className="fixed left-0 top-0 z-40 flex h-screen w-60 flex-col border-r border-slate-200 bg-slate-900">
-      <div className="flex h-14 items-center gap-2 border-b border-slate-700 px-4">
+    <aside className="fixed left-0 top-0 z-40 flex h-screen w-60 flex-col border-r border-orange-400 bg-gradient-to-b from-orange-600 via-orange-700 to-orange-800">
+      <div className="flex h-14 items-center gap-2 border-b border-white/20 px-4">
         <span className="text-lg font-semibold text-white">
           DIPR Media Monitor
         </span>
@@ -49,8 +57,8 @@ export function Sidebar({
               href={item.href}
               className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition ${
                 isActive
-                  ? "bg-slate-700 text-white"
-                  : "text-slate-300 hover:bg-slate-800 hover:text-white"
+                  ? "bg-white/20 text-white"
+                  : "text-orange-50/80 hover:bg-white/10 hover:text-white"
               }`}
             >
               <span>{item.icon}</span>
@@ -59,22 +67,22 @@ export function Sidebar({
           );
         })}
       </nav>
-      <div className="border-t border-slate-700 p-3">
+      <div className="border-t border-white/15 p-3">
         <div className="flex items-center gap-2 rounded-lg px-2 py-2">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-600 text-xs font-medium text-white">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/20 text-xs font-medium text-white">
             {(userName ?? userEmail ?? "U").slice(0, 2).toUpperCase()}
           </div>
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-medium text-white">
               {userName ?? "User"}
             </p>
-            <p className="truncate text-xs text-slate-400">{role}</p>
+            <p className="truncate text-xs text-orange-50/80">{role}</p>
           </div>
         </div>
         <button
           type="button"
           onClick={() => signOut({ callbackUrl: "/login" })}
-          className="mt-2 w-full rounded-lg px-3 py-2 text-left text-sm text-slate-400 hover:bg-slate-800 hover:text-white"
+          className="mt-2 w-full rounded-lg px-3 py-2 text-left text-sm text-orange-50/80 hover:bg-white/10 hover:text-white"
         >
           Sign out
         </button>

@@ -14,6 +14,7 @@ import { TopicDistributionChart } from "@/components/charts/TopicDistributionCha
 import { SourceVolumeChart } from "@/components/charts/SourceVolumeChart";
 import { SeverityDonut } from "@/components/charts/SeverityDonut";
 import { EntityCooccurrenceGraph } from "@/components/charts/EntityCooccurrenceGraph";
+import { KeywordWordCloud } from "@/components/charts/KeywordWordCloud";
 
 type Period = "24h" | "7d" | "30d";
 
@@ -81,8 +82,20 @@ export default function AnalyticsPage() {
         </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="grid gap-6 lg:grid-cols-5">
+        <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm lg:col-span-2">
+          <h2 className="text-lg font-semibold text-slate-900">
+            Severity distribution
+          </h2>
+          <p className="text-sm text-slate-500">Articles by severity</p>
+          <div className="mt-4">
+            <SeverityDonut
+              data={severityData ?? {}}
+              isLoading={severityLoading}
+            />
+          </div>
+        </div>
+        <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm  lg:col-span-3">
           <h2 className="text-lg font-semibold text-slate-900">
             Source volume
           </h2>
@@ -93,18 +106,6 @@ export default function AnalyticsPage() {
             <SourceVolumeChart
               data={sourceData ?? []}
               isLoading={sourceLoading}
-            />
-          </div>
-        </div>
-        <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-          <h2 className="text-lg font-semibold text-slate-900">
-            Severity distribution
-          </h2>
-          <p className="text-sm text-slate-500">Articles by severity</p>
-          <div className="mt-4">
-            <SeverityDonut
-              data={severityData ?? {}}
-              isLoading={severityLoading}
             />
           </div>
         </div>
@@ -133,21 +134,17 @@ export default function AnalyticsPage() {
           <h2 className="text-lg font-semibold text-slate-900">
             Top keywords this period
           </h2>
+          <p className="text-sm text-slate-500">
+            Size indicates frequency in this period
+          </p>
           <div className="mt-4">
             {keywordTrending?.length ? (
-              <div className="space-y-2">
-                {keywordTrending.slice(0, 10).map((k, i) => (
-                  <div
-                    key={k.keyword}
-                    className="flex items-center justify-between text-sm"
-                  >
-                    <span className="font-medium text-slate-700">
-                      {k.keyword}
-                    </span>
-                    <span className="text-slate-500">{k.count} matches</span>
-                  </div>
-                ))}
-              </div>
+              <KeywordWordCloud
+                words={keywordTrending.map((k) => ({
+                  text: k.keyword,
+                  value: k.count,
+                }))}
+              />
             ) : (
               <p className="text-sm text-slate-500">No keyword data</p>
             )}
