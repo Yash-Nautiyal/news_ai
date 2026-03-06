@@ -6,6 +6,7 @@ import type { Article, ArticleFilters as AF } from "@/types";
 function SkeletonRow() {
   return (
     <tr className="border-b border-slate-200">
+      <td className="w-10 py-3 pl-4" />
       <td className="py-3">
         <div className="h-4 w-3/4 animate-pulse rounded bg-slate-200" />
       </td>
@@ -35,6 +36,8 @@ export function ArticleTable({
   onSizeChange,
   onArticleSelect,
   onArticlePlay,
+  selectedIds = new Set<string>(),
+  onSelectionChange,
 }: {
   articles: Article[];
   isLoading: boolean;
@@ -45,8 +48,33 @@ export function ArticleTable({
   onSizeChange: (s: number) => void;
   onArticleSelect: (a: Article) => void;
   onArticlePlay?: (a: Article) => void;
+  selectedIds?: Set<string>;
+  onSelectionChange?: (ids: Set<string>) => void;
 }) {
   const pages = Math.max(1, Math.ceil(total / size));
+  const allOnPageSelected =
+    articles.length > 0 && articles.every((a) => selectedIds.has(a.id));
+
+  const handleToggleOne = (articleId: string, checked: boolean) => {
+    if (!onSelectionChange) return;
+    const next = new Set(selectedIds);
+    if (checked) next.add(articleId);
+    else next.delete(articleId);
+    onSelectionChange(next);
+  };
+
+  const handleToggleAll = () => {
+    if (!onSelectionChange) return;
+    if (allOnPageSelected) {
+      const next = new Set(selectedIds);
+      articles.forEach((a) => next.delete(a.id));
+      onSelectionChange(next);
+    } else {
+      const next = new Set(selectedIds);
+      articles.forEach((a) => next.add(a.id));
+      onSelectionChange(next);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -54,6 +82,7 @@ export function ArticleTable({
         <table className="w-full">
           <thead>
             <tr className="border-b border-slate-200 bg-slate-50 text-left text-sm text-slate-600">
+              <th className="w-10 px-4 py-3" />
               <th className="px-4 py-3">Article</th>
               <th className="px-4 py-3">Districts / Topics</th>
               <th className="px-4 py-3">Sentiment</th>
@@ -89,6 +118,21 @@ export function ArticleTable({
         <table className="w-full">
           <thead>
             <tr className="border-b border-slate-200 bg-slate-50 text-left text-sm text-slate-600">
+              <th className="w-10 px-4 py-3">
+                <input
+                  type="checkbox"
+                  checked={articles.length > 0 && allOnPageSelected}
+                  ref={(el) => {
+                    if (el)
+                      el.indeterminate =
+                        articles.length > 0 &&
+                        !allOnPageSelected &&
+                        articles.some((a) => selectedIds.has(a.id));
+                  }}
+                  onChange={handleToggleAll}
+                  className="h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-500"
+                />
+              </th>
               <th className="px-4 py-3">Article</th>
               <th className="px-4 py-3">Districts / Topics</th>
               <th className="px-4 py-3">Sentiment</th>
@@ -101,6 +145,10 @@ export function ArticleTable({
               <ArticleRow
                 key={article.id}
                 article={article}
+                selected={selectedIds.has(article.id)}
+                onToggleSelect={(checked) =>
+                  handleToggleOne(article.id, checked)
+                }
                 onView={() => onArticleSelect(article)}
                 onPlay={
                   article.youtube_video_id

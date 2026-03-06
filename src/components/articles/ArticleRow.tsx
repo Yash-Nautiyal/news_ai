@@ -28,10 +28,14 @@ const SENTIMENT_CLASS: Record<string, string> = {
 
 export function ArticleRow({
   article,
+  selected,
+  onToggleSelect,
   onView,
   onPlay,
 }: {
   article: Article;
+  selected: boolean;
+  onToggleSelect: (checked: boolean) => void;
   onView: () => void;
   onPlay?: () => void;
 }) {
@@ -48,6 +52,17 @@ export function ArticleRow({
       className="cursor-pointer border-b border-slate-200 hover:bg-slate-50"
       onClick={onView}
     >
+      <td
+        className="w-10 py-3 pl-4 pr-2 align-top"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <input
+          type="checkbox"
+          checked={selected}
+          onChange={(e) => onToggleSelect(e.target.checked)}
+          className="h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-500"
+        />
+      </td>
       <td className="py-3 pr-2 pl-2 align-top">
         <div className="flex flex-wrap items-center gap-2">
           {article.severity && (

@@ -83,9 +83,9 @@ export default function DistrictsPage() {
             )}
           </div>
         </div>
-        <div className="min-h-[450px]">
+        <div className="min-h-[620px]">
           {isLoading ? (
-            <div className="h-[450px] animate-pulse rounded-lg bg-slate-200" />
+            <div className="h-[620px] animate-pulse rounded-lg bg-slate-200" />
           ) : (
             <UPDistrictMap
               districtData={sorted}

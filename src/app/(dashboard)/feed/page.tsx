@@ -11,6 +11,7 @@ import { useSources } from "@/hooks/useSources";
 import { ArticleFilters } from "@/components/articles/ArticleFilters";
 import { ArticleTable } from "@/components/articles/ArticleTable";
 import { ArticleDetailSheet } from "@/components/articles/ArticleDetailSheet";
+import { SelectedArticlesReportSheet } from "@/components/articles/SelectedArticlesReportSheet";
 import type { Article, ArticleFilters as AF } from "@/types";
 
 function toYYYYMMDD(d: Date) {
@@ -28,6 +29,11 @@ export default function FeedPage() {
   const [selectedArticleId, setSelectedArticleId] = useState<string | null>(
     null,
   );
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [selectedArticlesMap, setSelectedArticlesMap] = useState<
+    Map<string, Article>
+  >(new Map());
+  const [showReportSheet, setShowReportSheet] = useState(false);
   const [autoRefresh, setAutoRefresh] = useState(true);
 
   const { data, isLoading, dataUpdatedAt } = useArticles(filters, {
@@ -60,6 +66,33 @@ export default function FeedPage() {
         timeZone: "Asia/Kolkata",
       })
     : "—";
+
+  const selectedArticles = useMemo(
+    () => Array.from(selectedArticlesMap.values()),
+    [selectedArticlesMap],
+  );
+
+  const handleSelectionChange = useCallback(
+    (ids: Set<string>) => {
+      setSelectedIds(ids);
+      const items = data?.items ?? [];
+      setSelectedArticlesMap((prev) => {
+        const next = new Map(prev);
+        prev.forEach((_, id) => {
+          if (!ids.has(id)) next.delete(id);
+        });
+        items.forEach((a) => {
+          if (ids.has(a.id)) next.set(a.id, a);
+        });
+        return next;
+      });
+    },
+    [data?.items],
+  );
+
+  const openReportSheet = () => {
+    if (selectedIds.size > 0) setShowReportSheet(true);
+  };
 
   return (
     <div className="space-y-6">
@@ -104,17 +137,38 @@ export default function FeedPage() {
 
       <div className="flex items-center justify-between">
         <p className="text-sm text-slate-500">Last updated: {lastUpdated}</p>
-        <button
-          type="button"
-          onClick={() => setAutoRefresh((v) => !v)}
-          className={`rounded-full px-3 py-1 text-sm font-medium ${
-            autoRefresh
-              ? "bg-green-100 text-green-800"
-              : "bg-slate-200 text-slate-600"
-          }`}
-        >
-          Auto-refresh: {autoRefresh ? "ON" : "OFF"}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={openReportSheet}
+            disabled={selectedIds.size === 0}
+            title={
+              selectedIds.size === 0
+                ? "Select one or more articles to create a report"
+                : `Create report for ${selectedIds.size} selected`
+            }
+            className="flex items-center gap-1.5 rounded-full border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 disabled:opacity-50 disabled:hover:bg-white"
+          >
+            <span className="text-base leading-none">+</span>
+            Report
+            {selectedIds.size > 0 && (
+              <span className="rounded-full bg-slate-200 px-1.5 py-0.5 text-xs">
+                {selectedIds.size}
+              </span>
+            )}
+          </button>
+          <button
+            type="button"
+            onClick={() => setAutoRefresh((v) => !v)}
+            className={`rounded-full px-3 py-1 text-sm font-medium ${
+              autoRefresh
+                ? "bg-green-100 text-green-800"
+                : "bg-slate-200 text-slate-600"
+            }`}
+          >
+            Auto-refresh: {autoRefresh ? "ON" : "OFF"}
+          </button>
+        </div>
       </div>
 
       <ArticleTable
@@ -129,7 +183,16 @@ export default function FeedPage() {
         }
         onArticleSelect={(a: Article) => setSelectedArticleId(a.id)}
         onArticlePlay={(a: Article) => setSelectedArticleId(a.id)}
+        selectedIds={selectedIds}
+        onSelectionChange={handleSelectionChange}
       />
+
+      {showReportSheet && (
+        <SelectedArticlesReportSheet
+          articles={selectedArticles}
+          onClose={() => setShowReportSheet(false)}
+        />
+      )}
 
       <ArticleDetailSheet
         articleId={selectedArticleId}
