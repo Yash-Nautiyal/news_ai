@@ -29,7 +29,7 @@ type KeywordWordCloudProps = {
 };
 
 const FONT_FAMILY =
-  "Impact, system-ui, -apple-system, BlinkMacSystemFont, 'Impact', sans-serif";
+  "'Montserrat', 'Noto Sans Devanagari', sans-serif";
 
 function useDimensions(targetRef: React.RefObject<HTMLDivElement | null>) {
   const getDimensions = useCallback(

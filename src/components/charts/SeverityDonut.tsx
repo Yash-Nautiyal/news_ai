@@ -31,7 +31,7 @@ type SliceDatum = {
   fill: string;
 };
 
-const FALLBACK_WIDTH = 550;
+const FALLBACK_WIDTH = 450;
 const FALLBACK_HEIGHT = 350;
 
 function useDimensions(targetRef: React.RefObject<HTMLDivElement | null>) {
