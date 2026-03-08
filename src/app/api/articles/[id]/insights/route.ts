@@ -65,9 +65,9 @@ function normalizeGeneratedInsights(
 function fallbackInsightsFromArticle(article: NonNullable<Awaited<ReturnType<typeof getArticleById>>>) {
   const keyEntities = Array.from(
     new Set([
-      ...article.politicians_mentioned,
+      ...(article.persons_named ?? article.politicians_mentioned ?? []),
       ...article.districts_mentioned,
-      ...article.schemes_mentioned,
+      ...(article.schemes_referenced ?? article.schemes_mentioned ?? []),
       ...article.keywords_matched,
     ]),
   );
@@ -149,8 +149,8 @@ export async function POST(
             summary_english: article.summary_english,
             content: article.content,
             districts_mentioned: article.districts_mentioned,
-            politicians_mentioned: article.politicians_mentioned,
-            schemes_mentioned: article.schemes_mentioned,
+            persons_named: article.persons_named ?? article.politicians_mentioned ?? [],
+            schemes_referenced: article.schemes_referenced ?? article.schemes_mentioned ?? [],
             keywords_matched: article.keywords_matched,
             sentiment: article.sentiment,
             analyst_severity: article.severity_analyst || article.severity,

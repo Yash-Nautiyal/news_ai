@@ -391,7 +391,7 @@ export function UPDistrictMap({
           inset: 0,
           transformStyle: "preserve-3d",
           transform: showCinematic
-            ? `rotateX(${TILT_DEG}deg) scale(0.65) translateY(-4%)`
+            ? `rotateX(${TILT_DEG}deg) scale(0.91) translateY(-2%)`
             : "rotateX(0deg) scale(1) translateY(0%)",
           transition: "transform 0.9s cubic-bezier(0.16, 1, 0.3, 1)",
           transformOrigin: "center center",
@@ -551,8 +551,8 @@ export function UPDistrictMap({
         ))}
       </div>
 
-      {/* ── District info panel (slides from right) ── */}
-      {selectedDistrictInfo && (
+      {/* ── District info panel (slides from right when any district is selected) ── */}
+      {activeDistrict && (
         <div
           className="absolute z-30 rounded-xl border border-slate-200/80 bg-white/95 shadow-2xl backdrop-blur-md"
           style={{
@@ -573,80 +573,94 @@ export function UPDistrictMap({
             District
           </p>
           <h3 className="mt-0.5 text-lg font-bold leading-tight text-slate-900">
-            {selectedDistrictInfo.district}
+            {activeDistrict}
           </h3>
-          {selectedDistrictInfo.district_hindi && (
+          {selectedDistrictInfo?.district_hindi && (
             <p className="hindi-text text-sm text-slate-500">
               {selectedDistrictInfo.district_hindi}
             </p>
           )}
 
-          <div className="mt-4 space-y-3">
-            <div>
-              <p className="text-[10px] font-medium uppercase tracking-wider text-slate-400">
-                Risk Score
-              </p>
-              <div className="mt-0.5 flex items-center gap-2">
-                <span
-                  className="text-2xl font-black"
-                  style={{ color: SEVERITY_FG[severity] }}
-                >
-                  {selectedDistrictInfo.risk_score}
-                </span>
-                <span
-                  className="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase"
-                  style={{
-                    backgroundColor: SEVERITY_BG[severity],
-                    color: SEVERITY_FG[severity],
-                  }}
-                >
-                  {severity}
-                </span>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-2">
-              <div className="rounded-lg bg-slate-50 p-2 text-center">
-                <p className="text-lg font-bold text-slate-800">
-                  {selectedDistrictInfo.article_count}
-                </p>
-                <p className="text-[10px] text-slate-500">Articles</p>
-              </div>
-              <div className="rounded-lg bg-red-50 p-2 text-center">
-                <p className="text-lg font-bold text-red-600">
-                  {selectedDistrictInfo.critical_count}
-                </p>
-                <p className="text-[10px] text-slate-500">Critical</p>
-              </div>
-            </div>
-
-            <div>
-              <p className="text-[10px] font-medium uppercase tracking-wider text-slate-400">
-                Sentiment
-              </p>
-              <p className="mt-0.5 text-sm font-medium capitalize text-slate-700">
-                {selectedDistrictInfo.dominant_sentiment}
-              </p>
-            </div>
-
-            {selectedDistrictInfo.top_topics?.length > 0 && (
+          {selectedDistrictInfo ? (
+            <div className="mt-4 space-y-3">
               <div>
                 <p className="text-[10px] font-medium uppercase tracking-wider text-slate-400">
-                  Topics
+                  Risk Score
                 </p>
-                <div className="mt-1 flex flex-wrap gap-1">
-                  {selectedDistrictInfo.top_topics.slice(0, 4).map((topic) => (
-                    <span
-                      key={topic}
-                      className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-600"
-                    >
-                      {topic}
-                    </span>
-                  ))}
+                <div className="mt-0.5 flex items-center gap-2">
+                  <span
+                    className="text-2xl font-black"
+                    style={{ color: SEVERITY_FG[severity] }}
+                  >
+                    {selectedDistrictInfo.risk_score}
+                  </span>
+                  <span
+                    className="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase"
+                    style={{
+                      backgroundColor: SEVERITY_BG[severity],
+                      color: SEVERITY_FG[severity],
+                    }}
+                  >
+                    {severity}
+                  </span>
                 </div>
               </div>
-            )}
-          </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div className="rounded-lg bg-slate-50 p-2 text-center">
+                  <p className="text-lg font-bold text-slate-800">
+                    {selectedDistrictInfo.article_count}
+                  </p>
+                  <p className="text-[10px] text-slate-500">Articles</p>
+                </div>
+                <div className="rounded-lg bg-red-50 p-2 text-center">
+                  <p className="text-lg font-bold text-red-600">
+                    {selectedDistrictInfo.critical_count}
+                  </p>
+                  <p className="text-[10px] text-slate-500">Critical</p>
+                </div>
+              </div>
+
+              <div>
+                <p className="text-[10px] font-medium uppercase tracking-wider text-slate-400">
+                  Sentiment
+                </p>
+                <p className="mt-0.5 text-sm font-medium capitalize text-slate-700">
+                  {selectedDistrictInfo.dominant_sentiment}
+                </p>
+              </div>
+
+              {selectedDistrictInfo.top_topics?.length > 0 && (
+                <div>
+                  <p className="text-[10px] font-medium uppercase tracking-wider text-slate-400">
+                    Topics
+                  </p>
+                  <div className="mt-1 flex flex-wrap gap-1">
+                    {selectedDistrictInfo.top_topics
+                      .slice(0, 4)
+                      .map((topic) => (
+                        <span
+                          key={topic}
+                          className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-600"
+                        >
+                          {topic}
+                        </span>
+                      ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="mt-4 rounded-lg bg-slate-50 p-3 text-center">
+              <p className="text-sm text-slate-500">
+                No risk data for this district in the current list.
+              </p>
+              <p className="mt-1 text-[10px] text-slate-400">
+                Select a district from the list or one with a marker to see
+                metrics.
+              </p>
+            </div>
+          )}
         </div>
       )}
 

@@ -303,10 +303,15 @@ export function ArticleDetailSheet({
                 ))}
               </div>
             ) : null}
-            {article.politicians_mentioned?.length ? (
+            {(article.persons_named?.length ??
+            article.politicians_mentioned?.length) ? (
               <div className="flex flex-wrap gap-1">
-                <span className="text-xs text-slate-500">Politicians:</span>
-                {article.politicians_mentioned.map((p) => (
+                <span className="text-xs text-slate-500">Persons named:</span>
+                {(
+                  article.persons_named ??
+                  article.politicians_mentioned ??
+                  []
+                ).map((p) => (
                   <span
                     key={p}
                     className="rounded bg-slate-200 px-1.5 py-0.5 text-xs"
@@ -316,10 +321,15 @@ export function ArticleDetailSheet({
                 ))}
               </div>
             ) : null}
-            {article.schemes_mentioned?.length ? (
+            {(article.schemes_referenced?.length ??
+            article.schemes_mentioned?.length) ? (
               <div className="flex flex-wrap gap-1">
                 <span className="text-xs text-slate-500">Schemes:</span>
-                {article.schemes_mentioned.map((s) => (
+                {(
+                  article.schemes_referenced ??
+                  article.schemes_mentioned ??
+                  []
+                ).map((s) => (
                   <span
                     key={s}
                     className="rounded bg-slate-200 px-1.5 py-0.5 text-xs"

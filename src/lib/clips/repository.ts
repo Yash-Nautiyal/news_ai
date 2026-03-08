@@ -23,7 +23,25 @@ import {
   getSupabaseAdminClient,
   hasSupabaseAdminConfig,
 } from "@/lib/supabase/admin";
+import {
+  getArticleByIdFromSupabase,
+  getArticlesForAnalyticsFromSupabase,
+  getArticlesPageFromSupabase,
+  useSupabaseArticles,
+} from "@/lib/supabase/articles";
 import { normalizeEntity } from "./utils";
+
+/**
+ * Schema handoff: When using the `articles` table (schema.sql), use column names:
+ * persons_named, schemes_referenced, departments_mentioned, content_language,
+ * analyst_synopsis, created_at. Do NOT set divisions_mentioned or severity (triggers).
+ * See SCHEMA_HANDOFF_CHECKLIST.md.
+ *
+ * Current implementation reads from the legacy "clips" table (with clip_media, etc.).
+ * When migrating to `articles`: select from "articles", map url <- articles.url,
+ * ingested_at <- articles.created_at, and use persons_named/schemes_referenced
+ * (and departments_mentioned) directly from the row.
+ */
 
 type ClipRow = {
   id: string;
@@ -42,8 +60,11 @@ type ClipRow = {
   severity_analyst: Severity | null;
   severity_ai: Severity | null;
   districts_mentioned: string[] | null;
-  politicians_mentioned: string[] | null;
-  schemes_mentioned: string[] | null;
+  politicians_mentioned?: string[] | null;
+  schemes_mentioned?: string[] | null;
+  persons_named?: string[] | null;
+  schemes_referenced?: string[] | null;
+  departments_mentioned?: string[] | null;
   topics: string[] | null;
   is_law_order: boolean;
   risk_flag: boolean;
@@ -170,6 +191,14 @@ function toArticleFromRow(row: ClipRow, clipBucket: string): Article {
           .publicUrl
       : media?.media_url || null;
 
+  const personsNamed = parseStringArray(
+    row.persons_named ?? row.politicians_mentioned,
+  );
+  const schemesRef = parseStringArray(
+    row.schemes_referenced ?? row.schemes_mentioned,
+  );
+  const deptsMentioned = parseStringArray(row.departments_mentioned);
+
   return {
     id: row.id,
     title: row.title,
@@ -187,8 +216,9 @@ function toArticleFromRow(row: ClipRow, clipBucket: string): Article {
       typeof row.sentiment_score === "number" ? row.sentiment_score : 50,
     severity: row.severity_analyst || row.severity_ai || null,
     districts_mentioned: parseStringArray(row.districts_mentioned),
-    politicians_mentioned: parseStringArray(row.politicians_mentioned),
-    schemes_mentioned: parseStringArray(row.schemes_mentioned),
+    persons_named: personsNamed,
+    schemes_referenced: schemesRef,
+    departments_mentioned: deptsMentioned,
     topics: parseStringArray(row.topics),
     is_law_order: Boolean(row.is_law_order),
     risk_flag: Boolean(row.risk_flag),
@@ -224,10 +254,15 @@ function toArticleFromRow(row: ClipRow, clipBucket: string): Article {
           generated_at: ai.generated_at || new Date().toISOString(),
         }
       : null,
+    politicians_mentioned: personsNamed,
+    schemes_mentioned: schemesRef,
   };
 }
 
 export async function getAllArticles() {
+  if (useSupabaseArticles()) {
+    return getArticlesForAnalyticsFromSupabase();
+  }
   const raw = await loadRawClipRows();
   if (!raw) return MOCK_ARTICLES.map(toArticleFromMock);
   const clipBucket = getClipBucketName();
@@ -285,9 +320,9 @@ function filterArticles(
     if (filters.entity) {
       const normalized = normalizeEntity(filters.entity);
       const entities = [
-        ...item.politicians_mentioned,
+        ...item.persons_named,
         ...item.districts_mentioned,
-        ...item.schemes_mentioned,
+        ...item.schemes_referenced,
         ...item.keywords_matched,
       ].map(normalizeEntity);
       if (!entities.includes(normalized)) return false;
@@ -300,6 +335,9 @@ function filterArticles(
 export async function getArticlesPage(
   filters: ArticleFilters & { entity?: string },
 ): Promise<PaginatedResponse<Article>> {
+  if (useSupabaseArticles()) {
+    return getArticlesPageFromSupabase(filters);
+  }
   const all = await getAllArticles();
   const filtered = filterArticles(all, filters).sort(
     (a, b) =>
@@ -323,6 +361,9 @@ export async function getArticlesPage(
 }
 
 export async function getArticleById(id: string) {
+  if (useSupabaseArticles()) {
+    return getArticleByIdFromSupabase(id);
+  }
   const found = MOCK_ARTICLES.find((a) => a.id === id);
   return found ? toArticleFromMock(found) : null;
 }
@@ -436,7 +477,7 @@ export async function getSentimentTrend(period?: string): Promise<SentimentTrend
   const bucketByHour = period === "24h";
   const buckets = new Map<
     string,
-    { positive: number; negative: number; neutral: number }
+    { positive: number; negative: number; neutral: number; mixed: number }
   >();
 
   for (const article of articles) {
@@ -447,8 +488,11 @@ export async function getSentimentTrend(period?: string): Promise<SentimentTrend
       date.setHours(0, 0, 0, 0);
     }
     const key = date.toISOString();
-    const bucket = buckets.get(key) || { positive: 0, negative: 0, neutral: 0 };
-    bucket[article.sentiment] += 1;
+    const bucket = buckets.get(key) || { positive: 0, negative: 0, neutral: 0, mixed: 0 };
+    const s = article.sentiment;
+    if (s === "positive" || s === "negative" || s === "neutral" || s === "mixed") {
+      bucket[s] += 1;
+    }
     buckets.set(key, bucket);
   }
 
@@ -458,6 +502,7 @@ export async function getSentimentTrend(period?: string): Promise<SentimentTrend
       positive: value.positive,
       negative: value.negative,
       neutral: value.neutral,
+      mixed: value.mixed,
     }))
     .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
 }
@@ -468,7 +513,7 @@ export async function getDistrictRisk(): Promise<DistrictRisk[]> {
     string,
     {
       items: Article[];
-      sentiment: Record<"positive" | "negative" | "neutral", number>;
+      sentiment: Record<"positive" | "negative" | "neutral" | "mixed", number>;
       topics: Map<string, number>;
     }
   >();
@@ -477,11 +522,14 @@ export async function getDistrictRisk(): Promise<DistrictRisk[]> {
     for (const district of article.districts_mentioned) {
       const entry = grouped.get(district) || {
         items: [],
-        sentiment: { positive: 0, negative: 0, neutral: 0 },
+        sentiment: { positive: 0, negative: 0, neutral: 0, mixed: 0 },
         topics: new Map<string, number>(),
       };
       entry.items.push(article);
-      entry.sentiment[article.sentiment] += 1;
+      const s = article.sentiment;
+      if (s === "positive" || s === "negative" || s === "neutral" || s === "mixed") {
+        entry.sentiment[s] += 1;
+      }
       for (const topic of article.topics) {
         entry.topics.set(topic, (entry.topics.get(topic) || 0) + 1);
       }
@@ -723,7 +771,7 @@ export async function getEntityCooccurrence(
       type: EntityCooccurrenceNode["type"];
     }> = [];
 
-    article.politicians_mentioned.forEach((person) => {
+    article.persons_named.forEach((person) => {
       const id = normalizeEntity(person);
       entities.push({ id, label: person, type: "politicians" });
       trackNode(id, person, "politicians");
@@ -733,7 +781,7 @@ export async function getEntityCooccurrence(
       entities.push({ id, label: district, type: "districts" });
       trackNode(id, district, "districts");
     });
-    article.schemes_mentioned.forEach((scheme) => {
+    article.schemes_referenced.forEach((scheme) => {
       const id = normalizeEntity(scheme);
       entities.push({ id, label: scheme, type: "schemes" });
       trackNode(id, scheme, "schemes");

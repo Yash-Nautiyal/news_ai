@@ -1,8 +1,46 @@
 import { NextResponse } from "next/server";
 import { getArticlesPage } from "@/lib/clips/repository";
+import {
+  hasSupabaseAdminConfig,
+} from "@/lib/supabase/admin";
+import {
+  insertArticleIntoSupabase,
+  type InsertArticlePayload,
+} from "@/lib/supabase/articles";
 import type { ArticleFilters } from "@/types";
 
 export const dynamic = "force-dynamic";
+
+export async function POST(request: Request) {
+  try {
+    if (!hasSupabaseAdminConfig()) {
+      return NextResponse.json(
+        { error: "Supabase not configured. Set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY." },
+        { status: 503 },
+      );
+    }
+    const body = (await request.json()) as InsertArticlePayload;
+    if (!body.source_type || !body.analyst_synopsis?.trim()) {
+      return NextResponse.json(
+        { error: "source_type and analyst_synopsis are required." },
+        { status: 400 },
+      );
+    }
+    if (body.analyst_synopsis.trim().length < 30) {
+      return NextResponse.json(
+        { error: "analyst_synopsis must be at least 30 characters." },
+        { status: 400 },
+      );
+    }
+    const { id } = await insertArticleIntoSupabase(body);
+    return NextResponse.json({ id }, { status: 201 });
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Failed to create article." },
+      { status: 500 },
+    );
+  }
+}
 
 export async function GET(request: Request) {
   try {

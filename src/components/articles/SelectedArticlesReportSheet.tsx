@@ -32,6 +32,16 @@ export function SelectedArticlesReportSheet({
       if (a.districts_mentioned?.length) {
         lines.push(`   Districts: ${a.districts_mentioned.join(", ")}`);
       }
+      if ((a.persons_named ?? a.politicians_mentioned)?.length) {
+        lines.push(
+          `   Persons: ${(a.persons_named ?? a.politicians_mentioned ?? []).join(", ")}`,
+        );
+      }
+      if ((a.schemes_referenced ?? a.schemes_mentioned)?.length) {
+        lines.push(
+          `   Schemes: ${(a.schemes_referenced ?? a.schemes_mentioned ?? []).join(", ")}`,
+        );
+      }
       if (a.topics?.length) {
         lines.push(`   Topics: ${a.topics.join(", ")}`);
       }
@@ -87,12 +97,23 @@ export function SelectedArticlesReportSheet({
                 <p className="mt-2 text-sm text-slate-600">
                   {a.summary_english}
                 </p>
-                {(a.districts_mentioned?.length || a.topics?.length) && (
+                {(a.districts_mentioned?.length ||
+                  (a.persons_named ?? a.politicians_mentioned)?.length ||
+                  a.topics?.length) && (
                   <p className="mt-2 text-xs text-slate-500">
                     {a.districts_mentioned?.length
                       ? `Districts: ${a.districts_mentioned.join(", ")}`
                       : ""}
-                    {a.districts_mentioned?.length && a.topics?.length
+                    {a.districts_mentioned?.length &&
+                    ((a.persons_named ?? a.politicians_mentioned)?.length ||
+                      a.topics?.length)
+                      ? " · "
+                      : ""}
+                    {(a.persons_named ?? a.politicians_mentioned)?.length
+                      ? `Persons: ${(a.persons_named ?? a.politicians_mentioned ?? []).join(", ")}`
+                      : ""}
+                    {(a.persons_named ?? a.politicians_mentioned)?.length &&
+                    a.topics?.length
                       ? " · "
                       : ""}
                     {a.topics?.length ? `Topics: ${a.topics.join(", ")}` : ""}

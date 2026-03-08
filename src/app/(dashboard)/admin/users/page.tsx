@@ -11,13 +11,27 @@ export default function AdminUsersPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (USE_MOCK) {
-      setUsers(MOCK_USERS);
-      setLoading(false);
-      return;
+    let cancelled = false;
+    async function load() {
+      if (USE_MOCK) {
+        setUsers(MOCK_USERS);
+        setLoading(false);
+        return;
+      }
+      try {
+        const res = await fetch("/api/users");
+        const data = await res.json();
+        if (!cancelled && Array.isArray(data)) setUsers(data);
+      } catch {
+        if (!cancelled) setUsers([]);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
     }
-    // In real mode, you would call /api/users here.
-    setLoading(false);
+    load();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   return (
