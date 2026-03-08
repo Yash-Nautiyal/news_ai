@@ -1,10 +1,10 @@
 import axios, { type AxiosError } from "axios";
 
-const baseURL =
-  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+// When unset, use same origin so Next.js API routes (e.g. /api/articles/...) are hit without CORS.
+const baseURL = process.env.NEXT_PUBLIC_API_URL ?? "";
 
 export const api = axios.create({
-  baseURL,
+  baseURL: baseURL || undefined,
   headers: {
     "Content-Type": "application/json",
   },

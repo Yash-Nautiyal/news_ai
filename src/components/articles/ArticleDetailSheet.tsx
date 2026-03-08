@@ -1,10 +1,11 @@
 "use client";
 
 import { useArticle, useSimilarArticles } from "@/hooks/useArticles";
-import type { Article, SourceType } from "@/types";
-import { SOURCE_TYPE_LABELS } from "@/lib/constants";
+import { useClipInsights } from "@/hooks/useClipInsights";
+import type { SourceType } from "@/types";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { ClipPlayer } from "@/components/media/ClipPlayer";
 
 const SOURCE_ICON: Record<SourceType, string> = {
   tv: "📺",
@@ -39,6 +40,8 @@ export function ArticleDetailSheet({
 }) {
   const { data: article, isLoading } = useArticle(articleId);
   const { data: similar } = useSimilarArticles(articleId);
+  const { data: generatedInsights, isLoading: insightsLoading } =
+    useClipInsights(articleId);
 
   if (!articleId) return null;
 
@@ -67,10 +70,10 @@ export function ArticleDetailSheet({
     new Date(article.published_at),
     "dd MMM yyyy, HH:mm",
   );
-  const embedUrl =
-    article.source_type === "tv" && article.youtube_video_id
-      ? `https://www.youtube.com/embed/${article.youtube_video_id}?start=${article.youtube_timestamp ?? 0}`
-      : null;
+  const hasPlayableClip = Boolean(
+    article.youtube_video_id || article.media_url,
+  );
+  const aiInsights = generatedInsights || article.ai_insights || null;
 
   return (
     <div className="fixed inset-y-0 right-0 z-50 flex w-full max-w-[600px] flex-col border-l border-slate-200 bg-white shadow-xl">
@@ -125,25 +128,12 @@ export function ArticleDetailSheet({
           </section>
         )}
 
-        {embedUrl && (
+        {hasPlayableClip && (
           <section className="mt-4">
-            <h3 className="text-sm font-medium text-slate-600">Video</h3>
-            <div className="mt-2 aspect-video w-full overflow-hidden rounded-lg bg-black">
-              <iframe
-                title="YouTube"
-                src={embedUrl}
-                className="h-full w-full"
-                allowFullScreen
-              />
+            <h3 className="text-sm font-medium text-slate-600">Clip Player</h3>
+            <div className="mt-2">
+              <ClipPlayer article={article} />
             </div>
-            <a
-              href={`https://www.youtube.com/watch?v=${article.youtube_video_id}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-1 inline-block text-sm text-blue-600 hover:underline"
-            >
-              Watch on YouTube
-            </a>
           </section>
         )}
 
@@ -186,6 +176,115 @@ export function ArticleDetailSheet({
               </span>
             )}
           </div>
+          {insightsLoading && !aiInsights && (
+            <p className="mt-3 text-xs text-slate-500">
+              Building AI insights from selected clip...
+            </p>
+          )}
+          {aiInsights && (
+            <div className="mt-3 space-y-3">
+              {aiInsights.short_summary && (
+                <div>
+                  <p className="text-xs font-medium text-slate-600">
+                    AI short summary
+                  </p>
+                  <p className="mt-1 text-sm text-slate-700">
+                    {aiInsights.short_summary}
+                  </p>
+                </div>
+              )}
+              {aiInsights.expanded_summary && (
+                <div>
+                  <p className="text-xs font-medium text-slate-600">
+                    AI expanded summary
+                  </p>
+                  <p className="mt-1 text-sm text-slate-700">
+                    {aiInsights.expanded_summary}
+                  </p>
+                </div>
+              )}
+              {aiInsights.narrative_analysis && (
+                <div>
+                  <p className="text-xs font-medium text-slate-600">
+                    Narrative analysis
+                  </p>
+                  <p className="mt-1 text-sm text-slate-700">
+                    {aiInsights.narrative_analysis}
+                  </p>
+                </div>
+              )}
+              {aiInsights.risk_points?.length ? (
+                <div>
+                  <p className="text-xs font-medium text-slate-600">
+                    Risk points
+                  </p>
+                  <ul className="mt-1 list-disc space-y-1 pl-4 text-sm text-slate-700">
+                    {aiInsights.risk_points.map((item) => (
+                      <li key={item}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+              {aiInsights.misinformation_checks?.length ? (
+                <div>
+                  <p className="text-xs font-medium text-slate-600">
+                    Misinformation checks
+                  </p>
+                  <ul className="mt-1 list-disc space-y-1 pl-4 text-sm text-slate-700">
+                    {aiInsights.misinformation_checks.map((item) => (
+                      <li key={item}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+              {aiInsights.key_entities?.length ? (
+                <div>
+                  <p className="text-xs font-medium text-slate-600">
+                    AI key entities
+                  </p>
+                  <div className="mt-1 flex flex-wrap gap-1">
+                    {aiInsights.key_entities.map((entity) => (
+                      <span
+                        key={entity}
+                        className="rounded bg-slate-200 px-1.5 py-0.5 text-xs"
+                      >
+                        {entity}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+              {aiInsights.recommended_actions?.length ? (
+                <div>
+                  <p className="text-xs font-medium text-slate-600">
+                    Recommended actions
+                  </p>
+                  <ul className="mt-1 list-disc space-y-1 pl-4 text-sm text-slate-700">
+                    {aiInsights.recommended_actions.map((item) => (
+                      <li key={item}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+              {(aiInsights.model_name || aiInsights.generated_at) && (
+                <div className="border-t border-slate-200 pt-2 text-xs text-slate-500">
+                  {aiInsights.model_name && (
+                    <span>Model: {aiInsights.model_name}</span>
+                  )}
+                  {aiInsights.model_name && aiInsights.generated_at && " · "}
+                  {aiInsights.generated_at && (
+                    <span>
+                      Generated:{" "}
+                      {format(
+                        new Date(aiInsights.generated_at),
+                        "dd MMM yyyy, HH:mm",
+                      )}
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </section>
 
         <section className="mt-4">

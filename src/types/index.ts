@@ -3,6 +3,19 @@ export type SourceType = "tv" | "print" | "online" | "youtube" | "upload";
 export type Severity = "CRITICAL" | "HIGH" | "MEDIUM" | "LOW";
 export type Sentiment = "positive" | "negative" | "neutral";
 export type SwotTag = "strength" | "weakness" | "opportunity" | "threat";
+export type ClipMediaType = "youtube" | "file" | "url" | "none";
+
+export interface ClipAIInsights {
+  short_summary: string;
+  expanded_summary: string;
+  narrative_analysis: string;
+  risk_points: string[];
+  misinformation_checks: string[];
+  key_entities: string[];
+  recommended_actions: string[];
+  model_name: string;
+  generated_at: string;
+}
 
 export interface Article {
   id: string;
@@ -31,6 +44,20 @@ export interface Article {
   youtube_video_id: string | null;
   youtube_timestamp: number | null;
   keywords_matched: string[];
+  severity_analyst?: Severity | null;
+  severity_ai?: Severity | null;
+  upload_section?: "online" | "tv" | null;
+  upload_category?: string | null;
+  media_type?: ClipMediaType;
+  media_url?: string | null;
+  media_storage_path?: string | null;
+  media_mime_type?: string | null;
+  media_duration_seconds?: number | null;
+  tv_telecast_date?: string | null;
+  tv_telecast_time?: string | null;
+  tv_program?: string | null;
+  tv_personality?: string | null;
+  ai_insights?: ClipAIInsights | null;
 }
 
 export interface AlertRecord {
@@ -124,6 +151,7 @@ export interface ArticleFilters {
   sentiment?: Sentiment | "";
   search?: string;
   source_name?: string;
+  entity?: string;
 }
 
 // Analytics response types
