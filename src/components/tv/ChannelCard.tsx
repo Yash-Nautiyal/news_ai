@@ -13,16 +13,19 @@ const SEVERITY_CLASS: Record<string, string> = {
 export function ChannelCard({
   channel,
   onSelect,
+  clipCount = 0,
+  latestHeadline,
 }: {
   channel: TVChannel;
   onSelect: () => void;
+  clipCount?: number;
+  latestHeadline?: string;
 }) {
   const lastChecked = channel.last_checked
     ? formatDistanceToNow(new Date(channel.last_checked), { addSuffix: true })
-    : "Never";
-  const isLive =
-    channel.last_checked &&
-    (Date.now() - new Date(channel.last_checked).getTime()) / 60000 < 15;
+    : "—";
+  // Treat all active channels as "live" for monitoring purposes.
+  const isLive = channel.is_active !== false;
 
   return (
     <div
@@ -40,7 +43,7 @@ export function ChannelCard({
           }`}
         />
         <span className="text-sm text-slate-600">
-          {isLive ? "Live" : "Offline"}
+          {isLive ? "Live" : "Disabled"}
         </span>
       </div>
       {channel.today_severity && (
@@ -53,21 +56,12 @@ export function ChannelCard({
         </span>
       )}
       <p className="hindi-text mt-2 line-clamp-2 italic text-slate-600">
-        {channel.last_transcript || "No transcript yet"}
+        {latestHeadline || channel.last_transcript || "—"}
       </p>
-      <p className="mt-1 text-xs text-slate-500">Last checked: {lastChecked}</p>
+      <p className="mt-1 text-xs text-slate-500">
+        Last checked: {lastChecked} • Clips: {clipCount}
+      </p>
       <div className="mt-3 flex gap-2">
-        {channel.youtube_channel_id && (
-          <a
-            href={`https://www.youtube.com/channel/${channel.youtube_channel_id}/live`}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={(e) => e.stopPropagation()}
-            className="rounded bg-red-100 px-2 py-1 text-xs font-medium text-red-800 hover:bg-red-200"
-          >
-            ▶ Watch Live
-          </a>
-        )}
         <button
           type="button"
           onClick={(e) => {
