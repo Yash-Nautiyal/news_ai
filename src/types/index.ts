@@ -135,17 +135,38 @@ export type KeywordCategory =
   | "districts"
   | "officials"
   | "schemes";
-export type KeywordStatus = "pending" | "active" | "rejected";
+export type KeywordStatus = "active" | "inactive";
+
+export type KeywordSourceTable =
+  | "entities"
+  | "geo_districts"
+  | "incident_categories";
 
 export interface Keyword {
+  /** UUID of the underlying record (entities / geo_districts / incident_categories) */
   id: string;
+  /** Canonical English term (name / district / incident) */
   term: string;
+  /** Hindi term if available */
   term_hindi: string | null;
+  /** UI-facing category used on the keywords page */
   category: KeywordCategory;
+  /** Variants / aliases for matching or hints (TEXT[]) */
   variants: string[];
+  /** Mirrors is_active from the underlying table */
   is_active: boolean;
+  /** Derived from is_active: active = true, inactive = false */
   status: KeywordStatus;
-  created_at: string;
+  /** Created timestamp where available; NULL for static seed data like geo_districts */
+  created_at: string | null;
+  /** Source table for routing updates */
+  source_table: KeywordSourceTable;
+  /** Same as id; kept explicit so future shapes can decouple display id from DB id */
+  source_id: string;
+  /** Raw entity category when source_table = entities (minister / official / department / scheme / organisation) */
+  entity_category?: string | null;
+  /** Raw group_name when source_table = incident_categories (crime / communal / protest / etc.) */
+  incident_group_name?: string | null;
 }
 
 export interface Source {

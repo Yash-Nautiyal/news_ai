@@ -39,8 +39,21 @@ export function useKeywordSuggestions() {
 interface CreateKeywordInput {
   term: string;
   term_hindi?: string | null;
+  /** UI category on the keywords page */
   category: KeywordCategory;
+  /** Aliases / variants to store in TEXT[] where applicable */
   variants: string[];
+  /**
+   * Optional: explicit entity category for entities table
+   * (minister / official / department / scheme / organisation).
+   * If omitted, the API will derive this from `category`.
+   */
+  entity_category?: string;
+  /**
+   * Optional: incident group name for incident_categories
+   * (crime / communal / protest / disaster / security / misinformation / other).
+   */
+  incident_group_name?: string;
 }
 
 export function useCreateKeyword() {
@@ -48,7 +61,21 @@ export function useCreateKeyword() {
   return useMutation({
     mutationFn: async (input: CreateKeywordInput) => {
       if (USE_MOCK) {
-        return { ...input, id: "mock", is_active: false, status: "pending", created_at: new Date().toISOString() } as Keyword;
+        return {
+          ...input,
+          id: "mock",
+          is_active: true,
+          status: "active",
+          created_at: new Date().toISOString(),
+          source_table: input.category === "law_order" ? "incident_categories" : input.category === "districts" ? "geo_districts" : "entities",
+          source_id: "mock",
+          entity_category:
+            input.category === "law_order" || input.category === "districts"
+              ? null
+              : input.entity_category ?? (input.category === "officials" ? "official" : input.category === "schemes" ? "scheme" : "organisation"),
+          incident_group_name:
+            input.category === "law_order" ? input.incident_group_name ?? "crime" : null,
+        } as Keyword;
       }
       const { data } = await api.post<Keyword>("/api/keywords", input);
       return data;
