@@ -94,7 +94,7 @@ export function SelectedArticlesReportSheet({
                     {format(new Date(a.published_at), "dd MMM yyyy, HH:mm")}
                   </p>
                   <p className="mt-1 text-sm text-slate-700">
-                    {a.sentiment} ({a.sentiment_score}%)
+                    {a.sentiment}
                     {a.severity && (
                       <span className="ml-2 rounded bg-slate-200 px-1.5 py-0.5 text-xs">
                         {a.severity}
