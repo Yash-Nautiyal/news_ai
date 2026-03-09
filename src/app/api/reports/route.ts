@@ -14,7 +14,7 @@ export async function GET(request: Request) {
       report_type: r.report_type as Report["report_type"],
       report_date: r.report_date,
       summary_text: r.summary_text,
-      download_url: r.download_url ?? undefined,
+      download_url: r.download_url ?? "",
       created_at: r.created_at,
     }));
     return NextResponse.json(reports);

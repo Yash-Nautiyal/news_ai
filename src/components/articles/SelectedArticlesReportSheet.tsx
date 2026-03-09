@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo } from "react";
+import { useState } from "react";
 import type { Article } from "@/types";
 import { format } from "date-fns";
+import { useGenerateReportFromSelection } from "@/hooks/useReports";
 
 export function SelectedArticlesReportSheet({
   articles,
@@ -11,47 +12,23 @@ export function SelectedArticlesReportSheet({
   articles: Article[];
   onClose: () => void;
 }) {
-  const reportText = useMemo(() => {
-    const lines: string[] = [
-      "DIPR UP Media Monitor – Selected Articles Report",
-      `Generated: ${format(new Date(), "dd MMM yyyy, HH:mm")} IST`,
-      `Total articles: ${articles.length}`,
-      "",
-      "---",
-      "",
-    ];
-    articles.forEach((a, i) => {
-      lines.push(`${i + 1}. ${a.title || "No title"}`);
-      lines.push(
-        `   Source: ${a.source_name} | ${format(new Date(a.published_at), "dd MMM yyyy, HH:mm")}`,
-      );
-      lines.push(
-        `   Sentiment: ${a.sentiment} (${a.sentiment_score}%)${a.severity ? ` | Severity: ${a.severity}` : ""}`,
-      );
-      lines.push(`   Summary: ${a.summary_english}`);
-      if (a.districts_mentioned?.length) {
-        lines.push(`   Districts: ${a.districts_mentioned.join(", ")}`);
-      }
-      if ((a.persons_named ?? a.politicians_mentioned)?.length) {
-        lines.push(
-          `   Persons: ${(a.persons_named ?? a.politicians_mentioned ?? []).join(", ")}`,
-        );
-      }
-      if ((a.schemes_referenced ?? a.schemes_mentioned)?.length) {
-        lines.push(
-          `   Schemes: ${(a.schemes_referenced ?? a.schemes_mentioned ?? []).join(", ")}`,
-        );
-      }
-      if (a.topics?.length) {
-        lines.push(`   Topics: ${a.topics.join(", ")}`);
-      }
-      lines.push("");
-    });
-    return lines.join("\n");
-  }, [articles]);
+  const [generatedReport, setGeneratedReport] = useState<{
+    filename: string;
+    saveError?: string;
+  } | null>(null);
 
-  const handleCopy = () => {
-    void navigator.clipboard.writeText(reportText);
+  const generateReport = useGenerateReportFromSelection();
+
+  const handleGenerate = () => {
+    const ids = articles.map((a) => a.id);
+    generateReport.mutate(ids, {
+      onSuccess: (data) => {
+        setGeneratedReport({
+          filename: data.filename,
+          ...(data.saveError && { saveError: data.saveError }),
+        });
+      },
+    });
   };
 
   if (articles.length === 0) return null;
@@ -73,64 +50,111 @@ export function SelectedArticlesReportSheet({
           </button>
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto p-4">
-          <div className="space-y-4">
-            {articles.map((a, i) => (
-              <div
-                key={a.id}
-                className="rounded-lg border border-slate-200 bg-slate-50/50 p-3"
-              >
-                <p className="font-medium text-slate-900 hindi-text">
-                  {i + 1}. {a.title || "No title"}
-                </p>
-                <p className="mt-1 text-xs text-slate-500">
-                  {a.source_name} ·{" "}
-                  {format(new Date(a.published_at), "dd MMM yyyy, HH:mm")}
-                </p>
-                <p className="mt-1 text-sm text-slate-700">
-                  {a.sentiment} ({a.sentiment_score}%)
-                  {a.severity && (
-                    <span className="ml-2 rounded bg-slate-200 px-1.5 py-0.5 text-xs">
-                      {a.severity}
-                    </span>
-                  )}
-                </p>
-                <p className="mt-2 text-sm text-slate-600">
-                  {a.summary_english}
-                </p>
-                {(a.districts_mentioned?.length ||
-                  (a.persons_named ?? a.politicians_mentioned)?.length ||
-                  a.topics?.length) && (
-                  <p className="mt-2 text-xs text-slate-500">
-                    {a.districts_mentioned?.length
-                      ? `Districts: ${a.districts_mentioned.join(", ")}`
-                      : ""}
-                    {a.districts_mentioned?.length &&
-                    ((a.persons_named ?? a.politicians_mentioned)?.length ||
-                      a.topics?.length)
-                      ? " · "
-                      : ""}
-                    {(a.persons_named ?? a.politicians_mentioned)?.length
-                      ? `Persons: ${(a.persons_named ?? a.politicians_mentioned ?? []).join(", ")}`
-                      : ""}
-                    {(a.persons_named ?? a.politicians_mentioned)?.length &&
-                    a.topics?.length
-                      ? " · "
-                      : ""}
-                    {a.topics?.length ? `Topics: ${a.topics.join(", ")}` : ""}
+          {generatedReport ? (
+            <div className="space-y-3">
+              <p className="text-sm font-medium text-green-700">
+                PDF report generated and downloaded.
+              </p>
+              {generatedReport.saveError && (
+                <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+                  <p className="font-medium">Could not save to database</p>
+                  <p className="mt-1 text-amber-700">
+                    {generatedReport.saveError}
                   </p>
-                )}
-              </div>
-            ))}
-          </div>
+                  <p className="mt-2 text-xs">
+                    Report was still downloaded. Check console for details.
+                  </p>
+                </div>
+              )}
+              <p className="text-sm text-slate-600">
+                File:{" "}
+                <span className="font-mono text-slate-800">
+                  {generatedReport.filename}
+                </span>
+              </p>
+              <p className="text-xs text-slate-500">
+                Check your downloads folder. You can generate another report or
+                close this panel.{" "}
+                {!generatedReport.saveError &&
+                  "Report is also saved under Reports → Selected."}
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {articles.map((a, i) => (
+                <div
+                  key={a.id}
+                  className="rounded-lg border border-slate-200 bg-slate-50/50 p-3"
+                >
+                  <p className="font-medium text-slate-900 hindi-text">
+                    {i + 1}. {a.title || "No title"}
+                  </p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    {a.source_name} ·{" "}
+                    {format(new Date(a.published_at), "dd MMM yyyy, HH:mm")}
+                  </p>
+                  <p className="mt-1 text-sm text-slate-700">
+                    {a.sentiment} ({a.sentiment_score}%)
+                    {a.severity && (
+                      <span className="ml-2 rounded bg-slate-200 px-1.5 py-0.5 text-xs">
+                        {a.severity}
+                      </span>
+                    )}
+                  </p>
+                  <p className="mt-2 text-sm text-slate-600">
+                    {a.summary_english}
+                  </p>
+                  {(a.districts_mentioned?.length ||
+                    (a.persons_named ?? a.politicians_mentioned)?.length ||
+                    a.topics?.length) && (
+                    <p className="mt-2 text-xs text-slate-500">
+                      {a.districts_mentioned?.length
+                        ? `Districts: ${a.districts_mentioned.join(", ")}`
+                        : ""}
+                      {a.districts_mentioned?.length &&
+                      ((a.persons_named ?? a.politicians_mentioned)?.length ||
+                        a.topics?.length)
+                        ? " · "
+                        : ""}
+                      {(a.persons_named ?? a.politicians_mentioned)?.length
+                        ? `Persons: ${(a.persons_named ?? a.politicians_mentioned ?? []).join(", ")}`
+                        : ""}
+                      {(a.persons_named ?? a.politicians_mentioned)?.length &&
+                      a.topics?.length
+                        ? " · "
+                        : ""}
+                      {a.topics?.length ? `Topics: ${a.topics.join(", ")}` : ""}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
-        <div className="flex shrink-0 gap-2 border-t border-slate-200 p-4">
-          <button
-            type="button"
-            onClick={handleCopy}
-            className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
-          >
-            Copy report text
-          </button>
+        <div className="flex shrink-0 flex-wrap gap-2 border-t border-slate-200 p-4">
+          {!generatedReport ? (
+            <>
+              <p className="text-xs text-slate-500">
+                AI summaries will be generated for each story if needed, then
+                the PDF report will be created and downloaded.
+              </p>
+              <button
+                type="button"
+                onClick={handleGenerate}
+                disabled={generateReport.isPending}
+                className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-60"
+              >
+                {generateReport.isPending
+                  ? "Generating AI summaries & report…"
+                  : "Generate report"}
+              </button>
+              {generateReport.isError && (
+                <p className="text-sm text-red-600">
+                  {generateReport.error?.message ?? "Generation failed"}
+                </p>
+              )}
+            </>
+          ) : null}
           <button
             type="button"
             onClick={onClose}

@@ -14,17 +14,10 @@ import { ArticleDetailSheet } from "@/components/articles/ArticleDetailSheet";
 import { SelectedArticlesReportSheet } from "@/components/articles/SelectedArticlesReportSheet";
 import type { Article, ArticleFilters as AF } from "@/types";
 
-function toYYYYMMDD(d: Date) {
-  return d.toISOString().slice(0, 10);
-}
-
 export default function FeedPage() {
-  const today = toYYYYMMDD(new Date());
   const [filters, setFilters] = useState<AF>({
     page: 1,
     size: 25,
-    date_from: today,
-    date_to: today,
   });
   const [selectedArticleId, setSelectedArticleId] = useState<string | null>(
     null,

@@ -193,7 +193,7 @@ export interface User {
 
 export interface Report {
   id: string;
-  report_type: "daily" | "weekly" | "monthly";
+  report_type: "daily" | "weekly" | "monthly" | "selected";
   report_date: string;
   summary_text: string;
   download_url: string;

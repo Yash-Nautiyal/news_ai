@@ -21,22 +21,15 @@ const SOURCE_TYPES: (SourceType | "")[] = [
 const SEVERITIES: Severity[] = ["CRITICAL", "HIGH", "MEDIUM", "LOW"];
 const SENTIMENTS: (Sentiment | "")[] = ["", "positive", "negative", "neutral"];
 
-function toYYYYMMDD(d: Date) {
-  return d.toISOString().slice(0, 10);
-}
-
 export function ArticleFilters({
   onFiltersChange,
 }: {
   onFiltersChange: (f: AF) => void;
 }) {
   const searchParams = useSearchParams();
-  const today = toYYYYMMDD(new Date());
 
-  const [dateFrom, setDateFrom] = useState(
-    searchParams.get("date_from") ?? today,
-  );
-  const [dateTo, setDateTo] = useState(searchParams.get("date_to") ?? today);
+  const [dateFrom, setDateFrom] = useState(searchParams.get("date_from") ?? "");
+  const [dateTo, setDateTo] = useState(searchParams.get("date_to") ?? "");
   const [sourceType, setSourceType] = useState<AF["source_type"]>(
     (searchParams.get("source_type") as AF["source_type"]) ?? "",
   );
@@ -88,8 +81,8 @@ export function ArticleFilters({
   }, [buildFilters, onFiltersChange]);
 
   const hasActive =
-    dateFrom !== today ||
-    dateTo !== today ||
+    !!dateFrom ||
+    !!dateTo ||
     !!sourceType ||
     severityChips.size > 0 ||
     !!district ||
@@ -97,8 +90,8 @@ export function ArticleFilters({
     !!search;
 
   const clearFilters = () => {
-    setDateFrom(today);
-    setDateTo(today);
+    setDateFrom("");
+    setDateTo("");
     setSourceType("");
     setSeverityChips(new Set());
     setDistrict("");
@@ -109,10 +102,11 @@ export function ArticleFilters({
 
   const toggleSeverity = (s: Severity) => {
     setSeverityChips((prev) => {
-      const next = new Set(prev);
-      if (next.has(s)) next.delete(s);
-      else next.add(s);
-      return next;
+      // Single-select: clicking one selects only that; clicking again clears
+      if (prev.has(s)) {
+        return new Set<Severity>();
+      }
+      return new Set<Severity>([s]);
     });
   };
 
