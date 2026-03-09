@@ -198,14 +198,27 @@ async function loadLogoImage(
   }
 }
 
-export async function buildSelectedReportPdf(articles: Article[]): Promise<Uint8Array> {
+type ReportVariant = "selected" | "daily" | "weekly" | "monthly";
+
+type BuildReportOptions = {
+  /** Logical report date (YYYY-MM-DD), used in header text. Defaults to today. */
+  reportDate?: string;
+  /** Controls heading text: Selected Articles / Daily / Weekly / Monthly. Defaults to "selected". */
+  variant?: ReportVariant;
+};
+
+export async function buildSelectedReportPdf(
+  articles: Article[],
+  options: BuildReportOptions = {},
+): Promise<Uint8Array> {
   const doc = await PDFDocument.create();
   const font = await doc.embedFont(StandardFonts.Helvetica);
   const boldFont = await doc.embedFont(StandardFonts.HelveticaBold);
   const logoImage = await loadLogoImage(doc);
 
-  const reportDate = format(new Date(), "yyyy-MM-dd");
-  const generatedAt = format(new Date(), "yyyy-MM-dd HH:mm");
+  const now = new Date();
+  const reportDate = options.reportDate || format(now, "yyyy-MM-dd");
+  const generatedAt = format(now, "yyyy-MM-dd HH:mm");
   const severityCounts = getSeverityCounts(articles);
   const overallRisk = getOverallRisk(articles);
   const executiveSummary = getExecutiveSummary(articles, severityCounts);
@@ -243,9 +256,18 @@ export async function buildSelectedReportPdf(articles: Article[]): Promise<Uint8
   ctx.y = y;
   y = drawText(ctx, "Media Intelligence Report", { bold: true, size: TITLE_SIZE });
   ctx.y = y;
+  const variant: ReportVariant = options.variant ?? "selected";
+  const variantLabel =
+    variant === "daily"
+      ? "Daily Report"
+      : variant === "weekly"
+        ? "Weekly Report"
+        : variant === "monthly"
+          ? "Monthly Report"
+          : "Selected Articles Report";
   y = drawText(
     ctx,
-    `Selected Articles Report | ${reportDate} | Generated ${generatedAt}`,
+    `${variantLabel} | ${reportDate} | Generated ${generatedAt}`,
     { size: 10 },
   );
   ctx.y = y - 12;
@@ -294,7 +316,8 @@ export async function buildSelectedReportPdf(articles: Article[]): Promise<Uint8
     ctx.y = y;
     // Sentiment and Severity with bold values (sample style)
     const sentimentLabel = "Sentiment: ";
-    const sentimentVal = `${a.sentiment.charAt(0).toUpperCase() + a.sentiment.slice(1)} (${a.sentiment_score}%)`;
+    const sentimentVal =
+      a.sentiment.charAt(0).toUpperCase() + a.sentiment.slice(1);
     const severityLabel = " | Severity: ";
     const severityVal = a.severity ?? "LOW";
     const x0 = MARGIN;
