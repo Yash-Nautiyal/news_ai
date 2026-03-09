@@ -11,15 +11,22 @@ async function sendWhatsAppAlert(article: Article) {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
+      article_id: article.id,
       title: article.title,
       summary: article.summary_english,
       severity: article.severity,
       source_name: article.source_name,
     }),
   });
-  if (!res.ok) {
-    const data = await res.json();
-    throw new Error(data.error ?? "Failed to send");
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok || !data?.success) {
+    throw new Error(data?.error ?? "Failed to send");
+  }
+  if (data.saveError) {
+    console.warn(
+      "[ArticleRow] WhatsApp alert sent but not stored:",
+      data.saveError,
+    );
   }
 }
 
@@ -57,7 +64,9 @@ export function ArticleRow({
   onView: () => void;
   onPlay?: () => void;
 }) {
-  const [waStatus, setWaStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
+  const [waStatus, setWaStatus] = useState<
+    "idle" | "sending" | "sent" | "error"
+  >("idle");
 
   const timeAgo = formatDistanceToNow(new Date(article.published_at), {
     addSuffix: true,
@@ -138,11 +147,11 @@ export function ArticleRow({
             SENTIMENT_CLASS[article.sentiment],
           )}
         >
-          {article.sentiment} ({article.sentiment_score}%)
+          {article.sentiment}
         </span>
       </td>
       <td className="py-3 pr-2 align-top text-sm text-slate-500">{timeAgo}</td>
-      <td className="py-3 pl-2 align-top">
+      <td className="py-3 pl-2 pr-3 align-top">
         <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
           <button
             type="button"
