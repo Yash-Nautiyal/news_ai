@@ -64,3 +64,45 @@ export function useReportDownloadUrl(id: string | null) {
     enabled: !!id,
   });
 }
+
+/** Result after generating a report from selected articles (PDF download). */
+export type SelectedReportResult = {
+  success: true;
+  filename: string;
+};
+
+function triggerPdfDownload(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+export function useGenerateReportFromSelection() {
+  return useMutation({
+    mutationFn: async (articleIds: string[]): Promise<SelectedReportResult> => {
+      if (USE_MOCK) {
+        const blob = new Blob(
+          ["Mock PDF – enable real data to generate actual report."],
+          { type: "application/pdf" },
+        );
+        const reportDate = new Date().toISOString().slice(0, 10);
+        triggerPdfDownload(blob, `DIPR-UP-Report-selected-${reportDate}.pdf`);
+        return { success: true, filename: `DIPR-UP-Report-selected-${reportDate}.pdf` };
+      }
+      const { data, headers } = await api.post<Blob>(
+        "/api/reports/generate-from-selection",
+        { article_ids: articleIds },
+        { responseType: "blob" },
+      );
+      const contentDisposition = headers["content-disposition"];
+      const match = contentDisposition?.match(/filename="?([^";\n]+)"?/);
+      const filename =
+        match?.[1] ?? `DIPR-UP-Report-selected-${new Date().toISOString().slice(0, 10)}.pdf`;
+      triggerPdfDownload(data, filename);
+      return { success: true, filename };
+    },
+  });
+}
