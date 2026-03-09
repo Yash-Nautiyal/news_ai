@@ -17,9 +17,10 @@ export type InsertReportPayload = {
 };
 
 /**
- * Uploads PDF bytes to bucket "media-uploads" at reports/selected/{date}/{id}.pdf
+ * Uploads PDF bytes to bucket "media-uploads" at reports/{type}/{date}/{id}.pdf
  * and inserts or updates a row in public.reports.
- * For report_type 'selected', uses ON CONFLICT (report_type, report_date) DO UPDATE so one row per day.
+ * Daily/weekly/monthly reports stay unique per (report_type, report_date)
+ * via a partial unique index; 'selected' reports can have multiple per day.
  * Returns { id, storage_path, download_url } or throws. Logs errors to console for developers.
  */
 export async function uploadReportPdfAndUpsert(
@@ -62,9 +63,12 @@ export async function uploadReportPdfAndUpsert(
     created_by: payload.created_by ?? null,
   };
 
-  const { error: insertError } = await supabase.from("reports").upsert(row, {
-    onConflict: "report_type,report_date",
-  });
+  const { error: insertError } =
+    payload.report_type === "selected"
+      ? await supabase.from("reports").insert(row)
+      : await supabase.from("reports").upsert(row, {
+          onConflict: "report_type,report_date",
+        });
 
   if (insertError) {
     console.error("[reports] Reports table insert/upsert failed:", insertError.message, { report_type: payload.report_type, report_date: payload.report_date });
