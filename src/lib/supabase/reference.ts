@@ -63,6 +63,50 @@ export async function getTVChannelsFromSupabase(): Promise<TVChannel[]> {
   }));
 }
 
+export type ConstituencyRow = {
+  id: string;
+  name: string;
+  district: string;
+  division: string;
+  constituency_no: number | null;
+  is_sc_reserved: boolean;
+  ls_constituency: string | null;
+};
+
+export async function getConstituenciesByDistrictFromSupabase(
+  district: string,
+): Promise<ConstituencyRow[]> {
+  if (!hasSupabaseAdminConfig()) return [];
+  const supabase = getSupabaseAdminClient();
+  const { data, error } = await supabase
+    .from("geo_constituencies")
+    .select(
+      "id,name,district,division,constituency_no,is_sc_reserved,ls_constituency,is_active",
+    )
+    .eq("district", district)
+    .eq("is_active", true)
+    .order("constituency_no", { ascending: true })
+    .order("name", { ascending: true });
+  if (error) {
+    console.error(
+      "[reference] Failed to load geo_constituencies for district",
+      district,
+      error.message,
+    );
+    return [];
+  }
+  const rows = (data ?? []) as (ConstituencyRow & { is_active?: boolean })[];
+  return rows.map((r) => ({
+    id: r.id,
+    name: r.name,
+    district: r.district,
+    division: r.division,
+    constituency_no: r.constituency_no,
+    is_sc_reserved: r.is_sc_reserved,
+    ls_constituency: r.ls_constituency,
+  }));
+}
+
 export type EntityRow = {
   id: string;
   name: string;
