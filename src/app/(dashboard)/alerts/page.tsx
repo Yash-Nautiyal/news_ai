@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useAlerts, useTestAlert } from "@/hooks/useAlerts";
+import { useAlerts } from "@/hooks/useAlerts";
 import { useSession } from "next-auth/react";
 import { format } from "date-fns";
 
@@ -17,7 +17,6 @@ export default function AlertsPage() {
   const role = (session?.user as { role?: string })?.role ?? "VIEWER";
   const [page, setPage] = useState(1);
   const { data, isLoading } = useAlerts({ page, size: 20 });
-  const testAlert = useTestAlert();
 
   const items = data?.items ?? [];
   const total = data?.total ?? 0;
@@ -28,20 +27,9 @@ export default function AlertsPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-slate-900">Alert History</h1>
         {role === "ADMIN" && (
-          <button
-            type="button"
-            onClick={() => {
-              if (
-                confirm("Send a test WhatsApp alert to verify configuration?")
-              ) {
-                testAlert.mutate();
-              }
-            }}
-            disabled={testAlert.isPending}
-            className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-50"
-          >
-            {testAlert.isPending ? "Sending..." : "Test Alert"}
-          </button>
+          <p className="text-xs text-slate-500">
+            Alerts are created automatically when WhatsApp alerts are sent.
+          </p>
         )}
       </div>
 

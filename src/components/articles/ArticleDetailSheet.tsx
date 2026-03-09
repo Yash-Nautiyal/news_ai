@@ -39,7 +39,9 @@ export function ArticleDetailSheet({
   onClose: () => void;
   onViewSimilar?: (id: string) => void;
 }) {
-  const [waStatus, setWaStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
+  const [waStatus, setWaStatus] = useState<
+    "idle" | "sending" | "sent" | "error"
+  >("idle");
 
   const { data: article, isLoading } = useArticle(articleId);
   const { data: similar } = useSimilarArticles(articleId);
@@ -54,19 +56,27 @@ export function ArticleDetailSheet({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          article_id: article.id,
           title: article.title,
           summary: article.summary_english,
           severity: article.severity,
           source_name: article.source_name,
         }),
       });
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error ?? "Failed to send");
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data?.success) {
+        throw new Error(data?.error ?? "Failed to send");
+      }
+      if (data.saveError) {
+        console.warn(
+          "[ArticleDetailSheet] WhatsApp alert sent but not stored:",
+          data.saveError,
+        );
       }
       setWaStatus("sent");
       setTimeout(() => setWaStatus("idle"), 3000);
-    } catch {
+    } catch (err) {
+      console.error("[ArticleDetailSheet] WhatsApp alert failed:", err);
       setWaStatus("error");
       setTimeout(() => setWaStatus("idle"), 3000);
     }
@@ -171,13 +181,13 @@ export function ArticleDetailSheet({
           <div className="mt-2 flex flex-wrap gap-2">
             <div className="flex items-center gap-2">
               <span className="text-xs text-slate-600">Sentiment</span>
-              <div className="h-2 w-24 overflow-hidden rounded-full bg-slate-200">
+              {/* <div className="h-2 w-24 overflow-hidden rounded-full bg-slate-200">
                 <div
                   className="h-full bg-green-500"
                   style={{ width: `${article.sentiment_score}%` }}
                 />
               </div>
-              <span className="text-xs">{article.sentiment_score}%</span>
+              <span className="text-xs">{article.sentiment_score}%</span> */}
             </div>
             {article.swot_tag && (
               <span
