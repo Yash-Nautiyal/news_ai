@@ -14,6 +14,7 @@ export function SelectedArticlesReportSheet({
 }) {
   const [generatedReport, setGeneratedReport] = useState<{
     filename: string;
+    saveError?: string;
   } | null>(null);
 
   const generateReport = useGenerateReportFromSelection();
@@ -22,7 +23,10 @@ export function SelectedArticlesReportSheet({
     const ids = articles.map((a) => a.id);
     generateReport.mutate(ids, {
       onSuccess: (data) => {
-        setGeneratedReport({ filename: data.filename });
+        setGeneratedReport({
+          filename: data.filename,
+          ...(data.saveError && { saveError: data.saveError }),
+        });
       },
     });
   };
@@ -51,6 +55,17 @@ export function SelectedArticlesReportSheet({
               <p className="text-sm font-medium text-green-700">
                 PDF report generated and downloaded.
               </p>
+              {generatedReport.saveError && (
+                <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+                  <p className="font-medium">Could not save to database</p>
+                  <p className="mt-1 text-amber-700">
+                    {generatedReport.saveError}
+                  </p>
+                  <p className="mt-2 text-xs">
+                    Report was still downloaded. Check console for details.
+                  </p>
+                </div>
+              )}
               <p className="text-sm text-slate-600">
                 File:{" "}
                 <span className="font-mono text-slate-800">
@@ -59,7 +74,9 @@ export function SelectedArticlesReportSheet({
               </p>
               <p className="text-xs text-slate-500">
                 Check your downloads folder. You can generate another report or
-                close this panel.
+                close this panel.{" "}
+                {!generatedReport.saveError &&
+                  "Report is also saved under Reports → Selected."}
               </p>
             </div>
           ) : (

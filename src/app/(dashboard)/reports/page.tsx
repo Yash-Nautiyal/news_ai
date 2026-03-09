@@ -9,7 +9,9 @@ export default function ReportsPage() {
   const { data: session } = useSession();
   const role = (session?.user as { role?: string })?.role ?? "VIEWER";
   const canGenerate = role === "ADMIN" || role === "ANALYST";
-  const [tab, setTab] = useState<"daily" | "weekly" | "monthly">("daily");
+  const [tab, setTab] = useState<"daily" | "weekly" | "monthly" | "selected">(
+    "daily",
+  );
   const { data: reports, isLoading } = useReports(tab);
   const generateReport = useGenerateReport();
   const [showGenerate, setShowGenerate] = useState(false);
@@ -97,7 +99,7 @@ export default function ReportsPage() {
       )}
 
       <div className="flex gap-2">
-        {(["daily", "weekly", "monthly"] as const).map((t) => (
+        {(["daily", "weekly", "monthly", "selected"] as const).map((t) => (
           <button
             key={t}
             type="button"
@@ -136,30 +138,34 @@ export default function ReportsPage() {
               <p className="font-medium text-slate-900">
                 {format(new Date(r.report_date), "EEEE, d MMMM yyyy")}
               </p>
-              <span className="mt-1 inline-block rounded bg-slate-100 px-2 py-0.5 text-xs">
+              <span className="mt-1 inline-block rounded bg-slate-100 px-2 py-0.5 text-xs capitalize">
                 {r.report_type}
               </span>
               <p className="mt-2 line-clamp-3 text-sm text-slate-600">
                 {r.summary_text}
               </p>
-              <div className="mt-3 flex gap-2">
-                <a
-                  href={r.download_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm font-medium text-blue-600 hover:underline"
-                >
-                  Download PDF
-                </a>
-                <a
-                  href={r.download_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-slate-500 hover:underline"
-                >
-                  View in browser
-                </a>
-              </div>
+              {r.download_url ? (
+                <div className="mt-3 flex gap-2">
+                  <a
+                    href={r.download_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm font-medium text-blue-600 hover:underline"
+                  >
+                    Download PDF
+                  </a>
+                  <a
+                    href={r.download_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-slate-500 hover:underline"
+                  >
+                    View in browser
+                  </a>
+                </div>
+              ) : (
+                <p className="mt-3 text-xs text-slate-500">No download link</p>
+              )}
             </div>
           ))}
         </div>

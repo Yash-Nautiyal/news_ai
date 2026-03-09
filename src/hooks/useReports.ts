@@ -7,7 +7,7 @@ import { api } from "@/lib/api";
 import type { Report } from "@/types";
 import { MOCK_REPORTS } from "@/lib/mockData";
 
-type ReportType = "daily" | "weekly" | "monthly";
+export type ReportType = "daily" | "weekly" | "monthly" | "selected";
 
 export function useReports(type?: ReportType) {
   return useQuery({
@@ -65,10 +65,11 @@ export function useReportDownloadUrl(id: string | null) {
   });
 }
 
-/** Result after generating a report from selected articles (PDF download). */
+/** Result after generating a report from selected articles (PDF download, optional save error). */
 export type SelectedReportResult = {
   success: true;
   filename: string;
+  saveError?: string;
 };
 
 function triggerPdfDownload(blob: Blob, filename: string) {
@@ -81,6 +82,7 @@ function triggerPdfDownload(blob: Blob, filename: string) {
 }
 
 export function useGenerateReportFromSelection() {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (articleIds: string[]): Promise<SelectedReportResult> => {
       if (USE_MOCK) {
@@ -102,7 +104,18 @@ export function useGenerateReportFromSelection() {
       const filename =
         match?.[1] ?? `DIPR-UP-Report-selected-${new Date().toISOString().slice(0, 10)}.pdf`;
       triggerPdfDownload(data, filename);
-      return { success: true, filename };
+      const saveError = headers["x-report-save-error"];
+      if (saveError && typeof saveError === "string") {
+        console.warn("[useGenerateReportFromSelection] Report save warning:", saveError);
+      }
+      return {
+        success: true,
+        filename,
+        ...(saveError && typeof saveError === "string" ? { saveError } : {}),
+      };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["reports"] });
     },
   });
 }
