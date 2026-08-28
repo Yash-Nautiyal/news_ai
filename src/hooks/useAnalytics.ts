@@ -5,6 +5,7 @@ const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK_DATA === "true";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import type {
+  AnalyticsPeriod,
   SentimentTrendPoint,
   TopicDistributionItem,
   SourceVolumeItem,
@@ -21,11 +22,9 @@ import {
   MOCK_TOPIC_DISTRIBUTION,
 } from "@/lib/mockData";
 
-type Period = "24h" | "7d" | "30d";
-
 const STALE_MS = 5 * 60 * 1000;
 
-export function useSentimentTrend(period: Period) {
+export function useSentimentTrend(period: AnalyticsPeriod) {
   return useQuery({
     queryKey: ["analytics", "sentiment-trend", period],
     queryFn: async (): Promise<SentimentTrendPoint[]> => {
@@ -104,14 +103,17 @@ export function useSeverityDistribution(period: string) {
   });
 }
 
-export function useEntityCooccurrence() {
+export function useEntityCooccurrence(period?: string) {
   return useQuery({
-    queryKey: ["analytics", "entity-cooccurrence"],
+    queryKey: ["analytics", "entity-cooccurrence", period],
     queryFn: async (): Promise<EntityCooccurrenceData> => {
       if (USE_MOCK) {
         return MOCK_ENTITY_GRAPH;
       }
-      const { data } = await api.get<EntityCooccurrenceData>("/api/analytics/entity-cooccurrence");
+      const { data } = await api.get<EntityCooccurrenceData>(
+        "/api/analytics/entity-cooccurrence",
+        period ? { params: { period } } : undefined,
+      );
       return data ?? { nodes: [], links: [] };
     },
     staleTime: STALE_MS,

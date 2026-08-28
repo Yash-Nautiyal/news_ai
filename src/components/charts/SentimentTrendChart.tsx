@@ -10,7 +10,14 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import type { SentimentTrendPoint } from "@/types";
+import type { AnalyticsPeriod, SentimentTrendPoint } from "@/types";
+
+const PERIODS: { value: AnalyticsPeriod; label: string }[] = [
+  { value: "all", label: "All" },
+  { value: "24h", label: "24h" },
+  { value: "7d", label: "7d" },
+  { value: "30d", label: "30d" },
+];
 
 const COLORS = {
   positive: "#22c55e",
@@ -25,8 +32,8 @@ export function SentimentTrendChart({
   isLoading,
 }: {
   data: SentimentTrendPoint[];
-  period: "24h" | "7d" | "30d";
-  onPeriodChange: (p: "24h" | "7d" | "30d") => void;
+  period: AnalyticsPeriod;
+  onPeriodChange: (p: AnalyticsPeriod) => void;
   isLoading?: boolean;
 }) {
   if (isLoading) {
@@ -49,6 +56,12 @@ export function SentimentTrendChart({
         hour: "2-digit",
         minute: "2-digit",
       });
+    if (period === "all")
+      return d.toLocaleDateString("en-IN", {
+        day: "2-digit",
+        month: "short",
+        year: "2-digit",
+      });
     return d.toLocaleDateString("en-IN", { day: "2-digit", month: "short" });
   };
 
@@ -60,18 +73,18 @@ export function SentimentTrendChart({
   return (
     <div className="space-y-2">
       <div className="flex gap-2">
-        {(["24h", "7d", "30d"] as const).map((p) => (
+        {PERIODS.map((p) => (
           <button
-            key={p}
+            key={p.value}
             type="button"
-            onClick={() => onPeriodChange(p)}
+            onClick={() => onPeriodChange(p.value)}
             className={`rounded px-3 py-1 text-sm font-medium ${
-              period === p
+              period === p.value
                 ? "bg-slate-900 text-white"
                 : "bg-slate-200 text-slate-700"
             }`}
           >
-            {p === "24h" ? "24h" : p === "7d" ? "7d" : "30d"}
+            {p.label}
           </button>
         ))}
       </div>

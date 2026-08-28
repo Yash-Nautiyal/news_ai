@@ -15,11 +15,17 @@ import { SourceVolumeChart } from "@/components/charts/SourceVolumeChart";
 import { SeverityDonut } from "@/components/charts/SeverityDonut";
 import { EntityCooccurrenceGraph } from "@/components/charts/EntityCooccurrenceGraph";
 import { KeywordWordCloud } from "@/components/charts/KeywordWordCloud";
+import type { AnalyticsPeriod } from "@/types";
 
-type Period = "24h" | "7d" | "30d";
+const PERIODS: { value: AnalyticsPeriod; label: string }[] = [
+  { value: "all", label: "All time" },
+  { value: "24h", label: "24 hours" },
+  { value: "7d", label: "7 days" },
+  { value: "30d", label: "30 days" },
+];
 
 export default function AnalyticsPage() {
-  const [period, setPeriod] = useState<Period>("7d");
+  const [period, setPeriod] = useState<AnalyticsPeriod>("all");
 
   const { data: sentimentData, isLoading: sentimentLoading } =
     useSentimentTrend(period);
@@ -30,7 +36,7 @@ export default function AnalyticsPage() {
   const { data: severityData, isLoading: severityLoading } =
     useSeverityDistribution(period);
   const { data: entityData, isLoading: entityLoading } =
-    useEntityCooccurrence();
+    useEntityCooccurrence(period);
   const { data: keywordTrending } = useKeywordTrending(period);
 
   return (
@@ -40,18 +46,18 @@ export default function AnalyticsPage() {
           Analytics & Insights
         </h1>
         <div className="flex gap-2">
-          {(["24h", "7d", "30d"] as const).map((p) => (
+          {PERIODS.map((p) => (
             <button
-              key={p}
+              key={p.value}
               type="button"
-              onClick={() => setPeriod(p)}
+              onClick={() => setPeriod(p.value)}
               className={`rounded-lg px-4 py-2 text-sm font-medium ${
-                period === p
+                period === p.value
                   ? "bg-slate-900 text-white"
                   : "bg-slate-200 text-slate-700"
               }`}
             >
-              {p === "24h" ? "24 hours" : p === "7d" ? "7 days" : "30 days"}
+              {p.label}
             </button>
           ))}
         </div>

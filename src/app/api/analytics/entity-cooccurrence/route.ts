@@ -3,9 +3,11 @@ import { getEntityCooccurrence } from "@/lib/clips/repository";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const data = await getEntityCooccurrence();
+    const { searchParams } = new URL(request.url);
+    const period = searchParams.get("period") ?? "all";
+    const data = await getEntityCooccurrence(period);
     return NextResponse.json(data);
   } catch (error) {
     return NextResponse.json(

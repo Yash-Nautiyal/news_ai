@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const period = searchParams.get("period") ?? "7d";
+    const period = searchParams.get("period") ?? "all";
     const data = await getTopicDistribution(period);
     return NextResponse.json(data);
   } catch (error) {

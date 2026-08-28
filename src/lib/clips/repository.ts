@@ -404,6 +404,7 @@ function periodMs(period?: string) {
 }
 
 function filterByPeriod(articles: Article[], period?: string) {
+  if (!period || period === "all") return articles;
   const now = Date.now();
   const maxAge = periodMs(period);
   return articles.filter(

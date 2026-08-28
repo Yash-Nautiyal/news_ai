@@ -235,6 +235,8 @@ export interface ArticleFilters {
 }
 
 // Analytics response types
+export type AnalyticsPeriod = "all" | "24h" | "7d" | "30d";
+
 export interface SentimentTrendPoint {
   timestamp: string;
   positive: number;
