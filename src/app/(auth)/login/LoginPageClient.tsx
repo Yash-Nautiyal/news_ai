@@ -40,6 +40,13 @@ export default function LoginPageClient() {
     <div className="flex min-h-screen flex-col items-center justify-center bg-slate-100 p-4">
       <div className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-8 shadow-sm">
         <div className="mb-8 text-center">
+          <img
+            src="/emblem.jpeg"
+            alt="Government of Uttar Pradesh emblem"
+            width={80}
+            height={80}
+            className="mx-auto mb-4 h-20 w-20 object-contain"
+          />
           <h1 className="text-2xl font-bold text-slate-900">DIPR UP</h1>
           <p className="mt-1 text-sm text-slate-500">
             Media Monitoring Platform
